@@ -1,19 +1,78 @@
 import os
+from multiprocessing import Queue
 import typing as tp
 import itertools
+from collections import namedtuple
 
-list_of_tuples = tp.Iterable[tp.Iterable[tp.Any]]
-list_of_dicts = tp.Iterable[tp.Mapping[str, tp.Any]]
+
+# Result tuple to be sent back from workers. Defined at module level for ease of pickling
+_ConcurrentResult = namedtuple('_ConcurrentResult', 'index result call_state_data exception location')
+
 
 def fork_map(f: tp.Callable,
-            f_args: list_of_tuples=None,
-            f_kwargs: list_of_dicts=None,
-            nworkers: int=os.cpu_count()):
+             iterable: tp.Iterable,
+             maxworkers: int=os.cpu_count(),
+             maxtasksperchild=None):
     '''
-    Call function `f` once for each item in `f_args` and `f_kwargs`, using a forked process. If
-    both `f_args` and `f_kwargs` are specified, they must be the same length.
+    Call function `f` once for each item in iterable, using forked processes.
+
+    Args:
+        maxworkers: limit the number of forked processes.
+        maxtasksperchild: If provided, limit the number of tasks processed by a single child process.
+        Once a process has handled this many tasks, the process dies and is replaced with a fresh fork.
     '''
-
-
-    #chunk f_args and f_kwargs into groups per worker
+    result_q = Queue()
+    children = []
+    for i, item in enumerate(iterable):
+        child_pid = _process_in_fork(i, f, result_q, (item, ), {})
+        children.append(child_pid)
     asdf
+
+
+def _process_in_fork(idx, func, result_q, args, kwargs):
+    '''Call `func` in a child process. This function returns the ID of the child
+    in the parent process, while the child process calls _call_function, puts the results in
+    the provided queues, then exits.
+    '''
+    pid = os.fork()
+    if pid:
+        return pid
+
+    #here we are the child
+    make_result = functools.partial(_ConcurrentResult,
+                                    result=None,
+            exception=None,
+            index=idx,
+            call_state_data=None,
+            location='',
+            )
+
+    result = None
+    try:
+        r = func(*args, **kwargs)
+
+        #pickle here, so that we can't crash with pickle errors in the finally clause
+        pickled_r = pickle.dumps(r)
+        data = pickle.dumps(kwargs['call_state'].data)
+        result = make_result(result=pickled_r, call_state_data=data)
+    except Exception as e:
+        try:
+            # In case func does something stupid like raising an unpicklable exception
+            pickled_exception = pickle.dumps(e)
+        except AttributeError:
+            pickled_exception = pickle.dumps(
+                AttributeError(f'Unplicklable exception raised in {func}'))
+        result = make_result(exception=pickled_exception,
+                             location=kwargs['call_state'].highlight_active_function())
+    finally:
+        result_q.put(result)
+        # it's necessary to explicitly close the result_q and join its background thread here,
+        # because the below os._exit won't allow time for any cleanup.
+        result_q.close()
+        result_q.join_thread()
+
+        # This is the one place that the python docs say it's normal to use os._exit. Because
+        # this is executed in a child process, calling sys.exit can have unintended
+        # consequences. e.g., anything above this that catches the resulting SystemExit can
+        # cause the child process to stay alive. the unittest framework does this.
+        os._exit(0)
