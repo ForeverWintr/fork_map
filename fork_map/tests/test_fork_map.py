@@ -34,3 +34,37 @@ class TestForkMap(util.BaseTestCase):
         else:
             #child
             wait(q)
+
+    def test_exceptions(self):
+        def fail(x):
+            if not x:
+                1 / 0
+            return x - 1
+
+        with self.assertRaises(ZeroDivisionError) as e:
+            fork_map.fork_map(fail, reversed(range(5)))
+
+    def test_unpicklable_return(self):
+        # fork_map can't handle functions that return unpicklable objects. Raise a descriptive
+        # exception
+        def f(x):
+            return lambda:None
+        with self.assertRaises(AttributeError) as e:
+            fork_map.fork_map(f, [1, 2])
+        self.assertEqual(str(e.exception),
+                "Can't pickle local object "
+                "'TestForkMap.test_unpicklable_return.<locals>.f.<locals>.<lambda>'")
+
+    def test_unpicklable_exception(self):
+        # Don't let child processes crash, even if they do weird things like raise unpickleable
+        # exceptions
+        def f(x):
+            class BadException(Exception):
+                pass
+            raise BadException()
+
+        with self.assertRaises(AttributeError) as e:
+            fork_map.fork_map(f, [1, 2])
+        msg = str(e.exception)
+        self.assertTrue(msg.startswith('<function TestForkMap.test_unpicklable_exception.<locals>.f at'))
+        self.assertTrue(msg.endswith('raised unpicklable exception "BadException()"'))

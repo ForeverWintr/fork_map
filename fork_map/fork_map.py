@@ -10,13 +10,13 @@ import pickle
 
 
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
-_ConcurrentResult = namedtuple('_ConcurrentResult', 'index result exception')
+_ConcurrentResult = namedtuple('_ConcurrentResult', ['index', 'result', 'exception'])
 
 
 def _process_in_fork(idx, func, result_q, args, kwargs):
     '''Call `func` in a child process. This function returns the ID of the child
     in the parent process, while the child process calls _call_function, puts the results in
-    the provided queues, then exits.
+    the provided queue, then exits.
     '''
     pid = os.fork()
     if pid:
@@ -42,7 +42,7 @@ def _process_in_fork(idx, func, result_q, args, kwargs):
             pickled_exception = pickle.dumps(e)
         except AttributeError:
             pickled_exception = pickle.dumps(
-                AttributeError('{func} raised unpicklable exception :"{:!s}"').format(func, e))
+                AttributeError('{} raised unpicklable exception "{!r}"'.format(func, e)))
         result = make_result(exception=pickled_exception)
     finally:
         result_q.put(result)
@@ -51,10 +51,10 @@ def _process_in_fork(idx, func, result_q, args, kwargs):
         result_q.close()
         result_q.join_thread()
 
-        # This is the one place that the python docs say it's normal to use os._exit. Because
-        # this is executed in a child process, calling sys.exit can have unintended
-        # consequences. e.g., anything above this that catches the resulting SystemExit can
-        # cause the child process to stay alive. the unittest framework does this.
+        # This is the one place that the python docs say it's normal to use os._exit. Because this
+        # is executed in a child process, calling sys.exit can have unintended consequences. e.g.,
+        # anything above this that catches the resulting SystemExit (e.g., the unittest framework)
+        # can cause the child process to stay alive.
         os._exit(0)
 
 
@@ -101,7 +101,7 @@ def fork_map(f: tp.Callable,
     result_q.put(None)
     for r in sorted(iter(result_q.get, None), key=itemgetter(0)):
         if r.exception:
-            raise RuntimeError('Caught exception in child process') from pickle.loads(r.exception)
+            raise pickle.loads(r.exception)
         results.append(pickle.loads(r.result))
     return results
 
