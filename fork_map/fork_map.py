@@ -8,6 +8,8 @@ import time
 from operator import itemgetter
 import pickle
 
+import psutil
+
 
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
 _ConcurrentResult = namedtuple('_ConcurrentResult', ['index', 'result', 'exception'])
@@ -20,7 +22,7 @@ def _process_in_fork(idx, func, result_q, args, kwargs):
     '''
     pid = os.fork()
     if pid:
-        return pid
+        return psutil.Process(pid)
 
     #here we are the child
     make_result = functools.partial(_ConcurrentResult,
@@ -81,20 +83,24 @@ def fork_map(f: tp.Callable,
 
     children = []
     for i, item in enumerate(iterable):
-        child_pid = _process_in_fork(i, f, result_q, (item, ), {})
-        children.append(child_pid)
+        child = _process_in_fork(i, f, result_q, (item, ), {})
+        children.append(child)
 
         while len(children) == maxworkers:
             #wait for a child to finish before forking again
-            exited = [p for p in children if _has_finished(p)]
-            if exited:
-                children = [c for c in children if c not in exited]
-            else:
-                time.sleep(0.01)
+            exited = []
+            for c in children:
+                try:
+                    c.wait(0.01)
+                except psutil.TimeoutExpired:
+                    pass
+                else:
+                    exited.append(c)
+            children = [c for c in children if c not in exited]
 
     #the parent waits for all children to complete
-    for pid in children:
-        os.waitpid(pid, 0)
+    for c in children:
+        c.wait()
 
     results = []
     #iterate over the result q in sorted order
