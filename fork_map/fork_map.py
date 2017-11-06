@@ -3,30 +3,11 @@ from multiprocessing import Queue
 import typing as tp
 import itertools
 from collections import namedtuple
+import functools
 
 
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
 _ConcurrentResult = namedtuple('_ConcurrentResult', 'index result call_state_data exception location')
-
-
-def fork_map(f: tp.Callable,
-             iterable: tp.Iterable,
-             maxworkers: int=os.cpu_count(),
-             maxtasksperchild=None):
-    '''
-    Call function `f` once for each item in iterable, using forked processes.
-
-    Args:
-        maxworkers: limit the number of forked processes.
-        maxtasksperchild: If provided, limit the number of tasks processed by a single child process.
-        Once a process has handled this many tasks, the process dies and is replaced with a fresh fork.
-    '''
-    result_q = Queue()
-    children = []
-    for i, item in enumerate(iterable):
-        child_pid = _process_in_fork(i, f, result_q, (item, ), {})
-        children.append(child_pid)
-    asdf
 
 
 def _process_in_fork(idx, func, result_q, args, kwargs):
@@ -76,3 +57,35 @@ def _process_in_fork(idx, func, result_q, args, kwargs):
         # consequences. e.g., anything above this that catches the resulting SystemExit can
         # cause the child process to stay alive. the unittest framework does this.
         os._exit(0)
+
+
+def _has_finished(pid):
+    '''Return true if the process identified by pid has finished, false otherwise'''
+    if os.waitpid(pid, os.WNOHANG) == (0, 0):
+        return False
+    return True
+
+
+def fork_map(f: tp.Callable,
+             iterable: tp.Iterable,
+             maxworkers: int=os.cpu_count()):
+    '''
+    Call function `f` once for each item in iterable, using forked processes.
+
+    Args:
+        maxworkers: limit the number of forked processes.
+    '''
+    if maxworkers < 1:
+        raise ValueError('maxworkers must be >= 1')
+
+    result_q = Queue()
+    children = []
+    for i, item in enumerate(iterable):
+        child_pid = _process_in_fork(i, f, result_q, (item, ), {})
+        children.append(child_pid)
+        while len(children) == maxworkers:
+            #wait for a child to finish before forking again
+            exited = []
+            for cpid in children:
+
+                asdf
