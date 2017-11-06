@@ -13,7 +13,6 @@ class TestForkMap(util.BaseTestCase):
             #time.sleep(300)
             return x * 2
 
-
         result = fork_map.fork_map(testf, range(5), maxworkers=2)
         self.assertListEqual(result, [x * 2 for x in range(5)])
 
@@ -28,9 +27,9 @@ class TestForkMap(util.BaseTestCase):
             #parent
             for i in range(10):
                 self.assertFalse(fork_map._has_finished(pid))
-                time.sleep(0.1)
+                time.sleep(0.01)
             q.put(1)
-            time.sleep(0.1)
+            time.sleep(0.01)
             self.assertTrue(fork_map._has_finished(pid))
         else:
             #child
