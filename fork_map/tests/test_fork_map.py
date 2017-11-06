@@ -10,12 +10,12 @@ class TestForkMap(util.BaseTestCase):
 
     def test_fork_map(self):
         def testf(x):
-            time.sleep(300)
+            #time.sleep(300)
             return x * 2
 
 
         result = fork_map.fork_map(testf, range(5), maxworkers=2)
-        self.fail()
+        self.assertListEqual(result, [x * 2 for x in range(5)])
 
     def test_has_finished(self):
         q = Queue()

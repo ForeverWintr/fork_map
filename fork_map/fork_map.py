@@ -4,10 +4,13 @@ import typing as tp
 import itertools
 from collections import namedtuple
 import functools
+import time
+from operator import itemgetter
+import pickle
 
 
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
-_ConcurrentResult = namedtuple('_ConcurrentResult', 'index result call_state_data exception location')
+_ConcurrentResult = namedtuple('_ConcurrentResult', 'index result exception')
 
 
 def _process_in_fork(idx, func, result_q, args, kwargs):
@@ -21,11 +24,9 @@ def _process_in_fork(idx, func, result_q, args, kwargs):
 
     #here we are the child
     make_result = functools.partial(_ConcurrentResult,
-                                    result=None,
+            result=None,
             exception=None,
             index=idx,
-            call_state_data=None,
-            location='',
             )
 
     result = None
@@ -34,17 +35,15 @@ def _process_in_fork(idx, func, result_q, args, kwargs):
 
         #pickle here, so that we can't crash with pickle errors in the finally clause
         pickled_r = pickle.dumps(r)
-        data = pickle.dumps(kwargs['call_state'].data)
-        result = make_result(result=pickled_r, call_state_data=data)
+        result = make_result(result=pickled_r)
     except Exception as e:
         try:
             # In case func does something stupid like raising an unpicklable exception
             pickled_exception = pickle.dumps(e)
         except AttributeError:
             pickled_exception = pickle.dumps(
-                AttributeError(f'Unplicklable exception raised in {func}'))
-        result = make_result(exception=pickled_exception,
-                             location=kwargs['call_state'].highlight_active_function())
+                AttributeError('{func} raised unpicklable exception :"{:!s}"').format(func, e))
+        result = make_result(exception=pickled_exception)
     finally:
         result_q.put(result)
         # it's necessary to explicitly close the result_q and join its background thread here,
@@ -79,13 +78,30 @@ def fork_map(f: tp.Callable,
         raise ValueError('maxworkers must be >= 1')
 
     result_q = Queue()
+
     children = []
     for i, item in enumerate(iterable):
         child_pid = _process_in_fork(i, f, result_q, (item, ), {})
         children.append(child_pid)
+
         while len(children) == maxworkers:
             #wait for a child to finish before forking again
-            exited = []
-            for cpid in children:
+            exited = [p for p in children if _has_finished(p)]
+            if exited:
+                children = [c for c in children if c not in exited]
+            else:
+                time.sleep(0.01)
 
-                asdf
+    #the parent waits for all children to complete
+    for pid in children:
+        os.waitpid(pid, 0)
+
+    results = []
+    #iterate over the result q in sorted order
+    result_q.put(None)
+    for r in sorted(iter(result_q.get, None), key=itemgetter(0)):
+        if r.exception:
+            raise RuntimeError('Caught exception in child process') from pickle.loads(r.exception)
+        results.append(pickle.loads(r.result))
+    return results
+
