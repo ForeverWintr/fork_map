@@ -1,9 +1,9 @@
+import os
 import time
 from multiprocessing import Queue
-import os
 
-from fork_map.tests import util
 from fork_map import fork_map
+from fork_map.tests import util
 
 
 class TestForkMap(util.BaseTestCase):

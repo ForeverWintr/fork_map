@@ -1,13 +1,12 @@
+import functools
 import os
-from multiprocessing import Queue
+import pickle
 import typing as tp
 from collections import namedtuple
-import functools
+from multiprocessing import Queue
 from operator import itemgetter
-import pickle
 
 import psutil
-
 
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
 _ConcurrentResult = namedtuple('_ConcurrentResult', ['index', 'result', 'exception'])
@@ -42,7 +41,7 @@ def _process_in_fork(idx, func, result_q, args, kwargs) -> psutil.Process | tp.N
             pickled_exception = pickle.dumps(e)
         except AttributeError:
             pickled_exception = pickle.dumps(
-                AttributeError('{} raised unpicklable exception "{!r}"'.format(func, e)))
+                AttributeError(f'{func} raised unpicklable exception "{e!r}"'))
         result = make_result(exception=pickled_exception)
     finally:
         result_q.put(result)
