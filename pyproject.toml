@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "fork-map"
+version = "0.1.0"
+description = "Like Python's map, but uses os.fork to multiprocess."
+authors = ["tomrutherford <tmrutherford@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+psutil = "^5.9.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
