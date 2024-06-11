@@ -7,6 +7,7 @@ import functools
 import time
 from operator import itemgetter
 import pickle
+import typing as tp
 
 import psutil
 
@@ -15,7 +16,7 @@ import psutil
 _ConcurrentResult = namedtuple('_ConcurrentResult', ['index', 'result', 'exception'])
 
 
-def _process_in_fork(idx, func, result_q, args, kwargs):
+def _process_in_fork(idx, func, result_q, args, kwargs) -> psutil.Process | tp.NoReturn:
     '''Call `func` in a child process. This function returns the ID of the child
     in the parent process, while the child process calls _call_function, puts the results in
     the provided queue, then exits.
