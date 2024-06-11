@@ -10,7 +10,7 @@ import psutil
 
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
 class _ConcurrentResult(tp.NamedTuple):
-    index: int
+    idx: int
     result: tp.Any
     exception: str | None
 
@@ -35,10 +35,9 @@ def _process_in_fork(
         _ConcurrentResult,
         result=None,
         exception=None,
-        index=idx,
+        idx=idx,
     )
 
-    result = None
     try:
         r = func(*args, **kwargs)
 
