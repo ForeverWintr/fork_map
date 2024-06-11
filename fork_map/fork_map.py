@@ -2,14 +2,17 @@ import functools
 import os
 import pickle
 import typing as tp
-from collections import namedtuple
 from multiprocessing import Queue
 from operator import itemgetter
 
 import psutil
 
+
 # Result tuple to be sent back from workers. Defined at module level for ease of pickling
-_ConcurrentResult = namedtuple("_ConcurrentResult", ["index", "result", "exception"])
+class _ConcurrentResult(tp.NamedTuple):
+    index: int
+    result: tp.Any
+    exception: str | None
 
 
 def _process_in_fork(
