@@ -12,7 +12,13 @@ import psutil
 _ConcurrentResult = namedtuple("_ConcurrentResult", ["index", "result", "exception"])
 
 
-def _process_in_fork(idx, func, result_q, args, kwargs) -> psutil.Process | tp.NoReturn:
+def _process_in_fork(
+    idx: int,
+    func: tp.Callable[..., tp.Any],
+    result_q: Queue[_ConcurrentResult],
+    args: tp.Iterable[tp.Any],
+    kwargs: dict[str, tp.Any],
+) -> psutil.Process | tp.NoReturn:
     """Call `func` in a child process. This function returns the ID of the child
     in the parent process, while the child process calls _call_function, puts the results in
     the provided queue, then exits.
