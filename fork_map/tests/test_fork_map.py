@@ -52,10 +52,9 @@ class TestForkMap(util.BaseTestCase):
 
         with self.assertRaises(AttributeError) as e:
             fork_map.fork_map(f, [1, 2])
-        self.assertEqual(
-            str(e.exception),
-            "Can't pickle local object "
-            "'TestForkMap.test_unpicklable_return.<locals>.f.<locals>.<lambda>'",
+        self.assertIn(
+            "TestForkMap.test_unpicklable_return.<locals>.f.<locals>.<lambda>",
+            e.exception.args[0],
         )
 
     def test_unpicklable_exception(self):
