@@ -1,6 +1,7 @@
 import os
 
-from fork_map import fork_map
+# Todo fix import paths
+from fork_map.fork_map import fork_map
 
 result = fork_map(lambda x: x * 2, range(5))
 print(result)

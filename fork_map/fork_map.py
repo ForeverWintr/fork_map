@@ -43,12 +43,13 @@ def _process_in_fork(
     try:
         r = func(*args, **kwargs)
 
-        # pickle here, so that we can't crash with pickle errors in the finally clause
+        # pickle here, so that we can't crash with pickle errors in the finally clause.
         pickled_r = pickle.dumps(r)
         result = make_result(result=pickled_r)
     except Exception as e:
         try:
-            # In case func does something stupid like raising an unpicklable exception
+            # In case func does something untoward like raising an unpicklable
+            # exception.
             pickled_exception = pickle.dumps(e)
         except AttributeError:
             pickled_exception = pickle.dumps(
