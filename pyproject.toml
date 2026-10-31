@@ -8,14 +8,16 @@ readme = "README.md"
 requires-python = ">=3.11,<4.0"
 dependencies = ["psutil (>=7.0.0,<8.0.0)"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.5"
-mypy = "^1.15.0"
-ruff = "^0.11.2"
+[dependency-groups]
+dev = ["pytest>=8.3.5", "mypy>=1.15.0", "ruff>=0.11.2"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.9.24,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+source-exclude = [".mypy_cache"]
 
 [tool.ruff.lint]
 select = [

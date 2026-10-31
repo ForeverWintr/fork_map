@@ -19,3 +19,20 @@ Because `fork_map` uses [`os.fork`](https://docs.python.org/3/library/os.html#os
 I wrote an article explaining the drawbacks to using `os.fork` like this. Read it here:
 
 ### [The Power and Danger of os.fork](https://medium.com/@tmrutherford/the-default-method-of-spawning-processes-on-linux-is-changing-in-python-3-14-heres-why-b9711df0d1b1)
+
+## Development
+This project uses [uv](https://docs.astral.sh/uv/) to manage its virtual environment and dependencies. After [installing uv](https://docs.astral.sh/uv/getting-started/installation/), run this from the repository root:
+
+```sh
+uv sync
+```
+
+This creates a `.venv` directory and installs `fork_map` along with the development tools (pytest, ruff, and mypy). Use `uv run` to run commands in that environment:
+
+```sh
+uv run pytest            # run the tests
+uv run ruff check .      # lint
+uv run mypy fork_map     # type check
+```
+
+Because `fork_map` depends on `os.fork`, the tests must be run on a POSIX system such as Linux or macOS.

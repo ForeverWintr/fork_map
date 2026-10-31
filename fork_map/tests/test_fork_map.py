@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 from multiprocessing import Queue
 
@@ -53,7 +54,8 @@ def test_unpicklable_return():
     def f(x):
         return lambda: None
 
-    with pytest.raises(AttributeError) as e:
+    # The exception type pickle raises here varies by Python version
+    with pytest.raises((AttributeError, pickle.PicklingError)) as e:
         fork_map.fork_map(f, [1, 2])
     assert "test_unpicklable_return.<locals>.f.<locals>.<lambda>" in e.value.args[0]
 
