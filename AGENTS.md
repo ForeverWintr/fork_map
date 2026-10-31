@@ -12,14 +12,14 @@ Caveats from the README that constrain any change:
 
 ## Commands
 
-Dependencies are managed with Poetry (PEP 621 `[project]` table plus a Poetry dev group).
+Dependencies and the virtualenv are managed with uv (build backend `uv_build`; dev tools are in the `dev` dependency group, which `uv sync` installs by default).
 
 ```sh
-poetry install                                   # install runtime + dev deps
-poetry run pytest                                # run all tests
-poetry run pytest fork_map/tests/test_fork_map.py::test_exceptions   # single test
-poetry run ruff check .                          # lint (rules: E, F, UP, B, SIM, I)
-poetry run mypy fork_map                         # type check
+uv sync                                          # create .venv, install runtime + dev deps
+uv run pytest                                    # run all tests
+uv run pytest fork_map/tests/test_fork_map.py::test_exceptions   # single test
+uv run ruff check .                              # lint (rules: E, F, UP, B, SIM, I)
+uv run mypy fork_map                             # type check
 ```
 
 `demo.py` contrasts `fork_map` with `Pool.map`; its second half is expected to fail (lambdas aren't pickleable).

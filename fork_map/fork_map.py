@@ -50,7 +50,8 @@ def _process_in_fork(
         try:
             # In case func does something stupid like raising an unpicklable exception
             pickled_exception = pickle.dumps(e)
-        except AttributeError:
+        # Python 3.14+ raises PicklingError for local objects; earlier versions raise AttributeError
+        except (AttributeError, pickle.PicklingError):
             pickled_exception = pickle.dumps(
                 AttributeError(f'{func} raised unpicklable exception "{e!r}"')
             )
