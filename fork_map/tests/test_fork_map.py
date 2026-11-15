@@ -8,7 +8,7 @@ import pytest
 from fork_map import fork_map
 
 
-def test_fork_map():
+def test_fork_map() -> None:
     def testf(x):
         # time.sleep(300)
         return x * 2
@@ -17,7 +17,7 @@ def test_fork_map():
     assert result == [x * 2 for x in range(5)]
 
 
-def test_has_finished():
+def test_has_finished() -> None:
     q = Queue()
 
     def wait(exit_q):
@@ -38,7 +38,7 @@ def test_has_finished():
         wait(q)
 
 
-def test_exceptions():
+def test_exceptions() -> None:
     def fail(x):
         if not x:
             1 / 0
@@ -48,9 +48,9 @@ def test_exceptions():
         fork_map.fork_map(fail, reversed(range(5)))
 
 
-def test_unpicklable_return():
-    # fork_map can't handle functions that return unpicklable objects. Raise a descriptive
-    # exception
+def test_unpicklable_return() -> None:
+    # fork_map can't handle functions that return unpicklable objects. Raise a
+    # descriptive exception
     def f(x):
         return lambda: None
 
@@ -60,9 +60,9 @@ def test_unpicklable_return():
     assert "test_unpicklable_return.<locals>.f.<locals>.<lambda>" in e.value.args[0]
 
 
-def test_unpicklable_exception():
-    # Don't let child processes crash, even if they do weird things like raise unpickleable
-    # exceptions
+def test_unpicklable_exception() -> None:
+    # Don't let child processes crash, even if they do weird things like raise
+    # unpickleable exceptions
     def f(x):
         class BadException(Exception):
             pass
