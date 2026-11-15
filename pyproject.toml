@@ -1,6 +1,6 @@
 [project]
 name = "fork-map"
-version = "0.1.0"
+version = "0.2.0"
 description = "Like Python's map, but uses os.fork to multiprocess."
 authors = [{ name = 'Tom Rutherford', email = 'foreverwintr@gmail.com' }]
 license = "MIT"
