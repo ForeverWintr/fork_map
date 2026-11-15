@@ -72,9 +72,7 @@ def _process_in_fork(
 
 def _has_finished(pid: int) -> bool:
     """Return true if the process identified by pid has finished, false otherwise"""
-    if os.waitpid(pid, os.WNOHANG) == (0, 0):
-        return False
-    return True
+    return os.waitpid(pid, os.WNOHANG) != (0, 0)
 
 
 def fork_map(

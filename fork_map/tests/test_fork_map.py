@@ -27,7 +27,7 @@ def test_has_finished():
     pid = os.fork()
     if pid:
         # parent
-        for i in range(10):
+        for _i in range(10):
             assert not fork_map._has_finished(pid)
             time.sleep(0.01)
         q.put(1)
