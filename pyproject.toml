@@ -5,7 +5,7 @@ description = "Like Python's map, but uses os.fork to multiprocess."
 authors = [{ name = 'Tom Rutherford', email = 'foreverwintr@gmail.com' }]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.13,<4.0"
 dependencies = ["psutil (>=7.0.0,<8.0.0)"]
 
 [dependency-groups]
