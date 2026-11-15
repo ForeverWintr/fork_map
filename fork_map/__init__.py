@@ -1,1 +1,1 @@
-from .core import fork_map
+from .core import fork_map as fork_map
