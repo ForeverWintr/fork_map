@@ -20,7 +20,7 @@ class _ConcurrentResult(tp.NamedTuple):
 def _process_in_fork(
     idx: int,
     func: tp.Callable[..., tp.Any],
-    result_q: Queue[_ConcurrentResult],
+    result_q: Queue[_ConcurrentResult | None],
     args: tp.Iterable[tp.Any],
     kwargs: dict[str, tp.Any],
 ) -> psutil.Process | tp.NoReturn:
@@ -89,12 +89,12 @@ def fork_map(
         maxworkers: limit the number of forked processes.
     """
     if maxworkers is None:
-        maxworkers = os.process_cpu_count()
+        maxworkers = os.process_cpu_count() or 1
 
     if maxworkers < 1:
         raise ValueError("maxworkers must be >= 1")
 
-    result_q = Queue()
+    result_q: Queue[_ConcurrentResult | None] = Queue()
 
     children = []
     for i, item in enumerate(iterable):
