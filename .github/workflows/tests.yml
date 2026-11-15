@@ -31,3 +31,15 @@ jobs:
       - run: uv run mypy fork_map
         # Report type errors even if lint fails
         if: ${{ !cancelled() }}
+
+  # Single job to use as the required status check in branch protection
+  all-pass:
+    name: test and lint pass
+    needs: [test, lint]
+    # Run even if a dependency fails, so this job reports failure instead of being skipped
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<< "$NEEDS"
