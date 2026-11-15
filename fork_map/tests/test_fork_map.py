@@ -19,16 +19,16 @@ def test_fork_map() -> None:
 
 
 def test_has_finished() -> None:
-    q = Queue()
+    q: Queue[int] = Queue()
 
-    def wait(exit_q):
+    def wait(exit_q: Queue[int]) -> tp.NoReturn:
         exit_q.get()
         os._exit(0)
 
     pid = os.fork()
     if pid:
         # parent
-        for _i in range(10):
+        for _ in range(10):
             assert not fork_map._has_finished(pid)
             time.sleep(0.01)
         q.put(1)
