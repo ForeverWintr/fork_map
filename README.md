@@ -5,7 +5,7 @@ function in child processes. Unlike the builtin multiprocessing map functions, `
 ```python
 from fork_map import fork_map
 
-result = fork_map(lambda x: x*2, range(10))
+result = fork_map(lambda x: x * 2, range(10))
 ```
 
 The example above isn't possible with `multiprocessing`'s `Pool.map`, because lambdas aren't pickleable.
