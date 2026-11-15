@@ -5,7 +5,7 @@ print(result)
 
 ## -----------------------------------
 
-from multiprocessing.pool import Pool
+from multiprocessing.pool import Pool  # noqa: E402
 
 # This fails, as lambdas aren't pickleable.
 with Pool() as p:
