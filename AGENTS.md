@@ -26,9 +26,9 @@ uv run mypy fork_map                             # type check
 
 ## Architecture
 
-All logic lives in `fork_map/fork_map.py`. `fork_map/__init__.py` is empty, so `from fork_map import fork_map` yields the **submodule**, and the function is `fork_map.fork_map(...)` (this is how the tests call it). The README example calls `fork_map(...)` directly, which does not match the current package layout.
+All logic lives in `fork_map/core.py`. `fork_map/__init__.py` re-exports the public function, so users write `from fork_map import fork_map`. Tests import the module (`from fork_map import core`) so they can reach private helpers like `core._has_finished`.
 
-Flow of `fork_map(f, iterable, maxworkers=os.cpu_count())`:
+Flow of `fork_map(f, iterable, maxworkers=None)` (`None` means `os.process_cpu_count() or 1`):
 
 1. A single `multiprocessing.Queue` is shared by all children for results.
 2. For each item, `_process_in_fork` calls `os.fork()`. The parent gets back a `psutil.Process`; the child runs `f(item)`.

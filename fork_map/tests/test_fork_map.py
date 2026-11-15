@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import pickle
 import time
@@ -6,7 +8,7 @@ from multiprocessing import Queue
 
 import pytest
 
-from fork_map import fork_map
+from fork_map import core
 
 
 def test_fork_map() -> None:
@@ -14,7 +16,7 @@ def test_fork_map() -> None:
         # time.sleep(300)
         return x * 2
 
-    result = fork_map.fork_map(testf, range(5), maxworkers=2)
+    result = core.fork_map(testf, range(5), maxworkers=2)
     assert result == [x * 2 for x in range(5)]
 
 
@@ -29,11 +31,11 @@ def test_has_finished() -> None:
     if pid:
         # parent
         for _ in range(10):
-            assert not fork_map._has_finished(pid)
+            assert not core._has_finished(pid)
             time.sleep(0.01)
         q.put(1)
         time.sleep(0.01)
-        assert fork_map._has_finished(pid)
+        assert core._has_finished(pid)
     else:
         # child
         wait(q)
@@ -46,7 +48,7 @@ def test_exceptions() -> None:
         return x - 1
 
     with pytest.raises(ZeroDivisionError):
-        fork_map.fork_map(fail, reversed(range(5)))
+        core.fork_map(fail, reversed(range(5)))
 
 
 def test_unpicklable_return() -> None:
@@ -57,7 +59,7 @@ def test_unpicklable_return() -> None:
 
     # The exception type pickle raises here varies by Python version
     with pytest.raises((AttributeError, pickle.PicklingError)) as e:
-        fork_map.fork_map(f, [1, 2])
+        core.fork_map(f, [1, 2])
     assert "test_unpicklable_return.<locals>.f.<locals>.<lambda>" in e.value.args[0]
 
 
@@ -71,7 +73,7 @@ def test_unpicklable_exception() -> None:
         raise BadException()
 
     with pytest.raises(AttributeError) as e:
-        fork_map.fork_map(f, [1, 2])
+        core.fork_map(f, [1, 2])
     msg = str(e.value)
     assert msg.startswith("<function test_unpicklable_exception.<locals>.f at")
 
