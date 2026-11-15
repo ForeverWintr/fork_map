@@ -14,7 +14,7 @@ import psutil
 class _ConcurrentResult(tp.NamedTuple):
     idx: int
     result: tp.Any
-    exception: str | None
+    exception: bytes | None
 
 
 def _process_in_fork(
@@ -77,13 +77,20 @@ def _has_finished(pid: int) -> bool:
     return True
 
 
-def fork_map(f: tp.Callable, iterable: tp.Iterable, maxworkers: int = os.cpu_count()):
+def fork_map(
+    f: tp.Callable[..., tp.Any],
+    iterable: tp.Iterable[tp.Any],
+    maxworkers: int | None = None,
+) -> list[tp.Any]:
     """
     Call function `f` once for each item in iterable, using forked processes.
 
     Args:
         maxworkers: limit the number of forked processes.
     """
+    if maxworkers is None:
+        maxworkers = os.process_cpu_count()
+
     if maxworkers < 1:
         raise ValueError("maxworkers must be >= 1")
 

@@ -72,3 +72,6 @@ secrets.*
 
 # uv
 .venv/
+
+# Wing private task files (not committed)
+.TASKS/
