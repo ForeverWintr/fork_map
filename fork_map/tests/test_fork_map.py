@@ -1,6 +1,7 @@
 import os
 import pickle
 import time
+import typing as tp
 from multiprocessing import Queue
 
 import pytest
@@ -39,9 +40,9 @@ def test_has_finished() -> None:
 
 
 def test_exceptions() -> None:
-    def fail(x):
+    def fail(x: int) -> int:
         if not x:
-            1 / 0
+            raise ZeroDivisionError
         return x - 1
 
     with pytest.raises(ZeroDivisionError):
@@ -51,7 +52,7 @@ def test_exceptions() -> None:
 def test_unpicklable_return() -> None:
     # fork_map can't handle functions that return unpicklable objects. Raise a
     # descriptive exception
-    def f(x):
+    def f(x: tp.Any) -> tp.Any:
         return lambda: None
 
     # The exception type pickle raises here varies by Python version
@@ -63,7 +64,7 @@ def test_unpicklable_return() -> None:
 def test_unpicklable_exception() -> None:
     # Don't let child processes crash, even if they do weird things like raise
     # unpickleable exceptions
-    def f(x):
+    def f(x: tp.Any) -> None:
         class BadException(Exception):
             pass
 

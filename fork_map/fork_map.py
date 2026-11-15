@@ -10,7 +10,8 @@ from operator import itemgetter
 import psutil
 
 
-# Result tuple to be sent back from workers. Defined at module level for ease of pickling
+# Result tuple to be sent back from workers. Defined at module level for ease of
+# pickling
 class _ConcurrentResult(tp.NamedTuple):
     idx: int
     result: tp.Any
@@ -24,8 +25,8 @@ def _process_in_fork(
     args: tp.Iterable[tp.Any],
     kwargs: dict[str, tp.Any],
 ) -> psutil.Process | tp.NoReturn:
-    """Call `func` in a child process. This function returns the ID of the child
-    in the parent process, while the child process calls _call_function, puts the results in
+    """Call `func` in a child process. This function returns the ID of the child in the
+    parent process, while the child process calls _call_function, puts the results in
     the provided queue, then exits.
     """
     pid = os.fork()
@@ -50,7 +51,8 @@ def _process_in_fork(
         try:
             # In case func does something stupid like raising an unpicklable exception
             pickled_exception = pickle.dumps(e)
-        # Python 3.14+ raises PicklingError for local objects; earlier versions raise AttributeError
+        # Python 3.14+ raises PicklingError for local objects; earlier versions raise
+        # AttributeError
         except (AttributeError, pickle.PicklingError):
             pickled_exception = pickle.dumps(
                 AttributeError(f'{func} raised unpicklable exception "{e!r}"')
@@ -58,15 +60,16 @@ def _process_in_fork(
         result = make_result(exception=pickled_exception)
     finally:
         result_q.put(result)
-        # it's necessary to explicitly close the result_q and join its background thread here,
-        # because the below os._exit won't allow time for any cleanup.
+        # it's necessary to explicitly close the result_q and join its background thread
+        # here, because the below os._exit won't allow time for any cleanup.
         result_q.close()
         result_q.join_thread()
 
-        # This is the one place that the python docs say it's normal to use os._exit. Because this
-        # is executed in a child process, calling sys.exit can have unintended consequences. e.g.,
-        # anything above this that catches the resulting SystemExit (e.g., the unittest framework)
-        # can cause the child process to stay alive.
+        # This is the one place that the python docs say it's normal to use os._exit.
+        # Because this is executed in a child process, calling sys.exit can have
+        # unintended consequences. e.g., anything above this that catches the resulting
+        # SystemExit (e.g., the unittest framework) can cause the child process to stay
+        # alive.
         os._exit(0)
 
 
